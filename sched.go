@@ -26,7 +26,7 @@ func Schedule(in time.Duration, fn func()) (Job, error) {
 	return DefaultScheduler.Schedule(in, fn)
 }
 
-// Cancel canceles a pending job and returns true.
+// Cancel cancels a pending job and returns true.
 // Returns false if no job was canceled.
 func Cancel(id Job) bool {
 	return DefaultScheduler.Cancel(id)
@@ -122,7 +122,7 @@ func (s *Scheduler) Schedule(in time.Duration, fn func()) (Job, error) {
 	return id, nil
 }
 
-// Cancel canceles a pending job and returns true.
+// Cancel cancels a pending job and returns true.
 // Returns false if no job was canceled.
 func (s *Scheduler) Cancel(id Job) bool {
 	s.lock.Lock()
