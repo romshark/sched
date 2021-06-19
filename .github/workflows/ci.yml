@@ -12,11 +12,11 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v2
 
-    # BUILD
-    - name: Build
-      env:
-        GOPROXY: "https://proxy.golang.org"
-      run: go build
+    # TESTS
+
+    # Run all tests with the race detector enabled
+    - name: Test
+      run: go test -v -race ./...
 
     # LINT
     - name: Install golint
