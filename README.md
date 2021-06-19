@@ -4,6 +4,9 @@
 <a href="https://goreportcard.com/report/github.com/romshark/sched">
   <img src="https://goreportcard.com/badge/github.com/romshark/sched" alt="GoReportCard">
 </a>
+<a href="https://pkg.go.dev/github.com/romshark/sched">
+  <img src="https://pkg.go.dev/badge/github.com/romshark/sched.svg" alt="Go Reference">
+</a>
 
 # sched
 
