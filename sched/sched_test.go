@@ -373,6 +373,29 @@ func TestScanAfterNotFound(t *testing.T) {
 	require.Zero(t, count)
 }
 
+func TestScheduleAutoExec(t *testing.T) {
+	s := sched.New(0)
+	var wg sync.WaitGroup
+	wg.Add(3)
+	var executionOrder []int
+	s.Schedule(time.Minute, func() {
+		defer wg.Done()
+		executionOrder = append(executionOrder, 2)
+	})
+	s.Schedule(2*time.Minute, func() {
+		defer wg.Done()
+		executionOrder = append(executionOrder, 3)
+	})
+	s.Schedule(1, func() {
+		defer wg.Done()
+		executionOrder = append(executionOrder, 1)
+		require.Equal(t, 2*time.Minute, s.AdvanceTime(2*time.Minute))
+	})
+	wg.Wait()
+
+	require.Equal(t, []int{1, 2, 3}, executionOrder)
+}
+
 type Job struct {
 	sched.Job
 	JobFn func()
