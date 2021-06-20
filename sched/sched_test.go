@@ -335,6 +335,44 @@ func TestScanInterrupt(t *testing.T) {
 	require.Equal(t, 1, count)
 }
 
+func TestScanAfterNotFound(t *testing.T) {
+	mc := gomock.NewController(t)
+	tm := mock.NewMockTimeProvider(mc)
+
+	sched.DefaultScheduler = sched.NewWithProvider(0, tm)
+
+	start := time.Date(2021, 6, 20, 10, 00, 00, 0, time.UTC)
+
+	tm.EXPECT().Now().AnyTimes().Return(start)
+	timer := mock.NewMockTimer(mc)
+	tm.EXPECT().AfterFunc(gomock.Any(), gomock.Any()).AnyTimes().Return(timer)
+
+	callback := func() { panic("this should not be invoked") }
+
+	j1, err := sched.Schedule(sched.Hour, callback)
+	require.NoError(t, err)
+	require.NotZero(t, j1)
+
+	j2, err := sched.Schedule(2*sched.Hour, callback)
+	require.NoError(t, err)
+	require.NotZero(t, j2)
+
+	j3, err := sched.Schedule(3*sched.Hour, callback)
+	require.NoError(t, err)
+	require.NotZero(t, j3)
+
+	count := 0
+	ok := sched.Scan(
+		sched.Job(ksuid.New()),
+		func(job sched.Job, jobFn func()) bool {
+			count++
+			return true
+		},
+	)
+	require.False(t, ok)
+	require.Zero(t, count)
+}
+
 type Job struct {
 	sched.Job
 	JobFn func()
