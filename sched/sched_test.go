@@ -87,6 +87,70 @@ func TestCancel(t *testing.T) {
 	ExpectJobs(t)
 }
 
+func TestAdvanceTime(t *testing.T) {
+	mc := gomock.NewController(t)
+	tm := mock.NewMockTimeProvider(mc)
+
+	sched.DefaultScheduler = sched.NewWithProvider(0, tm)
+
+	start := time.Date(2021, 6, 20, 10, 00, 00, 0, time.UTC)
+	tm.EXPECT().
+		Now().
+		MaxTimes(2).
+		Return(start)
+
+	timer := mock.NewMockTimer(mc)
+	timer.EXPECT().
+		Stop().
+		MaxTimes(1).
+		Return(true)
+
+	dueDur := sched.Hour
+	originalDue := start.Add(dueDur)
+	tm.EXPECT().
+		AfterFunc(dueDur, gomock.Any()).
+		MaxTimes(1).
+		Return(timer)
+
+	ExpectJobs(t)
+
+	callback := func() {
+		panic("this should not be invoked")
+	}
+
+	require.Equal(t, 0, sched.Len())
+	j, err := sched.Schedule(sched.Hour, callback)
+	require.NoError(t, err)
+	require.NotZero(t, j)
+
+	ExpectJobs(t, Job{j, callback})
+
+	advanceBy := 25 * time.Minute
+	timer.EXPECT().
+		Reset(originalDue.Sub(start.Add(advanceBy))).
+		MaxTimes(1).
+		Return(true)
+	tm.EXPECT().
+		Now().
+		MaxTimes(1).
+		Return(start)
+
+	require.Equal(t, advanceBy, sched.AdvanceTime(advanceBy))
+
+	elapsed := 5 * time.Minute
+	advanceBy2 := 30 * time.Minute
+	timer.EXPECT().
+		Reset(originalDue.Sub(start.Add(elapsed + advanceBy + advanceBy2))).
+		MaxTimes(1).
+		Return(true)
+	tm.EXPECT().
+		Now().
+		MaxTimes(1).
+		Return(start.Add(elapsed))
+
+	require.Equal(t, advanceBy+advanceBy2, sched.AdvanceTime(advanceBy2))
+}
+
 type Job struct {
 	sched.Job
 	JobFn func()
