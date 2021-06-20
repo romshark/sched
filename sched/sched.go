@@ -219,6 +219,7 @@ func (s *Scheduler) Scan(
 		if start = s.queue.Get(after); start == nil {
 			return false
 		}
+		start = start.Next()
 	} else {
 		start = s.queue.Front()
 	}
