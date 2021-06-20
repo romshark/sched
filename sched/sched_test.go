@@ -259,6 +259,47 @@ func TestAdvanceTime(t *testing.T) {
 	require.Equal(t, start.Add(advanceBy+advanceBy2), sched.Now())
 }
 
+func TestScanAfter(t *testing.T) {
+	mc := gomock.NewController(t)
+	tm := mock.NewMockTimeProvider(mc)
+
+	sched.DefaultScheduler = sched.NewWithProvider(0, tm)
+
+	start := time.Date(2021, 6, 20, 10, 00, 00, 0, time.UTC)
+
+	tm.EXPECT().Now().AnyTimes().Return(start)
+	timer := mock.NewMockTimer(mc)
+	tm.EXPECT().AfterFunc(gomock.Any(), gomock.Any()).AnyTimes().Return(timer)
+
+	callback := func() { panic("this should not be invoked") }
+
+	j1, err := sched.Schedule(sched.Hour, callback)
+	require.NoError(t, err)
+	require.NotZero(t, j1)
+
+	j2, err := sched.Schedule(2*sched.Hour, callback)
+	require.NoError(t, err)
+	require.NotZero(t, j2)
+
+	j3, err := sched.Schedule(3*sched.Hour, callback)
+	require.NoError(t, err)
+	require.NotZero(t, j3)
+
+	ExpectJobsAfter(t, sched.Job{},
+		Job{j1, callback},
+		Job{j2, callback},
+		Job{j3, callback},
+	)
+	ExpectJobsAfter(t, j1,
+		Job{j2, callback},
+		Job{j3, callback},
+	)
+	ExpectJobsAfter(t, j2,
+		Job{j3, callback},
+	)
+	ExpectJobsAfter(t, j3)
+}
+
 type Job struct {
 	sched.Job
 	JobFn func()
@@ -266,9 +307,12 @@ type Job struct {
 
 func ExpectJobs(t *testing.T, expected ...Job) {
 	require.Equal(t, len(expected), sched.Len())
+	ExpectJobsAfter(t, sched.Job{}, expected...)
+}
 
+func ExpectJobsAfter(t *testing.T, after sched.Job, expected ...Job) {
 	var actual []Job
-	ok := sched.Scan(sched.Job{}, func(j sched.Job, jobFn func()) bool {
+	ok := sched.Scan(after, func(j sched.Job, jobFn func()) bool {
 		actual = append(actual, Job{j, jobFn})
 		return true
 	})
