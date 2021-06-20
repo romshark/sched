@@ -24,6 +24,8 @@ func TestSchedule(t *testing.T) {
 	sched.DefaultScheduler = sched.NewWithProvider(0, tm)
 
 	start := time.Date(2021, 6, 20, 10, 00, 00, 0, time.UTC)
+
+	// First job
 	tm.EXPECT().
 		Now().
 		MaxTimes(2).
@@ -49,6 +51,7 @@ func TestSchedule(t *testing.T) {
 
 	ExpectJobs(t, Job{j, callback})
 
+	// Second job
 	timer.EXPECT().
 		Stop().
 		MaxTimes(1).
@@ -71,6 +74,18 @@ func TestSchedule(t *testing.T) {
 	require.NotZero(t, j2)
 
 	ExpectJobs(t, Job{j2, callback}, Job{j, callback})
+
+	// Third job
+	tm.EXPECT().
+		Now().
+		MaxTimes(2).
+		Return(start)
+
+	j3, err := sched.Schedule(2*sched.Hour, callback)
+	require.NoError(t, err)
+	require.NotZero(t, j)
+
+	ExpectJobs(t, Job{j2, callback}, Job{j, callback}, Job{j3, callback})
 }
 
 func TestScheduleImmediately(t *testing.T) {
