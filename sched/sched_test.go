@@ -47,6 +47,46 @@ func TestSchedule(t *testing.T) {
 	ExpectJobs(t, Job{j, callback})
 }
 
+func TestCancel(t *testing.T) {
+	mc := gomock.NewController(t)
+	tm := mock.NewMockTimeProvider(mc)
+
+	sched.DefaultScheduler = sched.NewWithProvider(0, tm)
+
+	tm.EXPECT().
+		Now().
+		MaxTimes(2).
+		Return(time.Date(2021, 6, 20, 10, 00, 00, 0, time.UTC))
+
+	timer := mock.NewMockTimer(mc)
+	timer.EXPECT().
+		Stop().
+		MaxTimes(1).
+		Return(true)
+
+	tm.EXPECT().
+		AfterFunc(sched.Hour, gomock.Any()).
+		MaxTimes(1).
+		Return(timer)
+
+	ExpectJobs(t)
+
+	callback := func() {
+		panic("this should not be invoked")
+	}
+
+	require.Equal(t, 0, sched.Len())
+	j, err := sched.Schedule(sched.Hour, callback)
+	require.NoError(t, err)
+	require.NotZero(t, j)
+
+	ExpectJobs(t, Job{j, callback})
+
+	require.True(t, sched.Cancel(j))
+
+	ExpectJobs(t)
+}
+
 type Job struct {
 	sched.Job
 	JobFn func()
