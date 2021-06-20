@@ -5,6 +5,8 @@ package sched_test
 import (
 	"reflect"
 	"runtime"
+	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -68,6 +70,45 @@ func TestSchedule(t *testing.T) {
 	require.NotZero(t, j2)
 
 	ExpectJobs(t, Job{j2, callback}, Job{j, callback})
+}
+
+func TestScheduleImmediately(t *testing.T) {
+	mc := gomock.NewController(t)
+	tm := mock.NewMockTimeProvider(mc)
+
+	sched.DefaultScheduler = sched.NewWithProvider(0, tm)
+
+	start := time.Date(2021, 6, 20, 10, 00, 00, 0, time.UTC)
+	tm.EXPECT().
+		Now().
+		MaxTimes(2).
+		Return(start)
+
+	timer := mock.NewMockTimer(mc)
+	tm.EXPECT().
+		AfterFunc(sched.Hour, gomock.Any()).
+		MaxTimes(1).
+		Return(timer)
+
+	ExpectJobs(t)
+
+	var counter int64
+	var wg sync.WaitGroup
+
+	wg.Add(1)
+	callback := func() {
+		defer wg.Done()
+		atomic.AddInt64(&counter, 1)
+	}
+
+	j, err := sched.Schedule(0, callback)
+	require.NoError(t, err)
+	require.Zero(t, j)
+
+	ExpectJobs(t)
+
+	wg.Wait()
+	require.Equal(t, int64(1), atomic.LoadInt64(&counter))
 }
 
 func TestCancel(t *testing.T) {
