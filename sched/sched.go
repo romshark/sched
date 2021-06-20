@@ -9,12 +9,43 @@ import (
 	"github.com/segmentio/ksuid"
 )
 
+type (
+	Time     = time.Time
+	Duration = time.Duration
+)
+
+const (
+	Nanosecond  = time.Nanosecond
+	Microsecond = time.Microsecond
+	Millisecond = time.Millisecond
+	Second      = time.Second
+	Minute      = time.Minute
+	Hour        = time.Hour
+)
+
+type Timer interface {
+	Stop() bool
+	Reset(Duration) bool
+}
+
+type TimeProvider interface {
+	Now() Time
+	AfterFunc(Duration, func()) Timer
+}
+
+type defaultTimeProvider struct{}
+
+func (p defaultTimeProvider) Now() Time { return time.Now() }
+func (p defaultTimeProvider) AfterFunc(d Duration, fn func()) Timer {
+	return time.AfterFunc(d, fn)
+}
+
 // DefaultScheduler is the default Scheduler
 // used by Schedule, Cancel, Now, AdvanceTime, Len and Scan.
 var DefaultScheduler = New(0)
 
 // Now returns the current time of the scheduler considering the offset.
-func Now() time.Time {
+func Now() Time {
 	return DefaultScheduler.Now()
 }
 
@@ -22,7 +53,7 @@ func Now() time.Time {
 // fn will be executed in its own goroutine.
 // if n < 1 then fn will be executed immediately and
 // the returned JobID will be zero.
-func Schedule(in time.Duration, fn func()) (Job, error) {
+func Schedule(in Duration, fn func()) (Job, error) {
 	return DefaultScheduler.Schedule(in, fn)
 }
 
@@ -33,7 +64,7 @@ func Cancel(id Job) bool {
 }
 
 // AdvanceTime advances the current time by the given duration.
-func AdvanceTime(by time.Duration) (newOffset time.Duration) {
+func AdvanceTime(by Duration) (newOffset Duration) {
 	return DefaultScheduler.AdvanceTime(by)
 }
 
@@ -51,10 +82,9 @@ func Scan(after Job, fn func(job Job, jobFn func()) bool) (ok bool) {
 }
 
 // New creates a new scheduler with the given time offset.
-func New(timeOffset time.Duration) *Scheduler {
-	t := time.NewTimer(time.Hour)
-	t.Stop()
+func New(timeOffset Duration) *Scheduler {
 	return &Scheduler{
+		provider:   defaultTimeProvider{},
 		timeOffset: timeOffset,
 		queue: skiplist.New(
 			skiplist.GreaterThanFunc(func(a, b interface{}) int {
@@ -70,19 +100,30 @@ func New(timeOffset time.Duration) *Scheduler {
 	}
 }
 
+// NewWithProvider is similar to New but replaces the default time provider
+func NewWithProvider(
+	timeOffset Duration,
+	p TimeProvider,
+) *Scheduler {
+	s := New(timeOffset)
+	s.provider = p
+	return s
+}
+
 // Scheduler is a job scheduler.
 type Scheduler struct {
+	provider   TimeProvider
 	lock       sync.RWMutex
-	timeOffset time.Duration
+	timeOffset Duration
 	queue      *skiplist.SkipList
 	scheduled  struct {
 		job
-		*time.Timer
+		Timer
 	}
 }
 
 // Now returns the current time of the scheduler considering the offset.
-func (s *Scheduler) Now() time.Time {
+func (s *Scheduler) Now() Time {
 	s.lock.RLock()
 	defer s.lock.RUnlock()
 	return s.now()
@@ -92,7 +133,7 @@ func (s *Scheduler) Now() time.Time {
 // fn will be executed in its own goroutine.
 // if n < 1 then fn will be executed immediately and
 // the returned JobID will be zero.
-func (s *Scheduler) Schedule(in time.Duration, fn func()) (Job, error) {
+func (s *Scheduler) Schedule(in Duration, fn func()) (Job, error) {
 	if in < 1 {
 		// Execute immediately
 		go fn()
@@ -141,7 +182,7 @@ func (s *Scheduler) Cancel(id Job) bool {
 }
 
 // AdvanceTime advances the current time by the given duration.
-func (s *Scheduler) AdvanceTime(by time.Duration) (newOffset time.Duration) {
+func (s *Scheduler) AdvanceTime(by Duration) (newOffset Duration) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
@@ -217,7 +258,7 @@ func (s *Scheduler) execute(j job) {
 		go e()
 	} else {
 		// Schedule for deferred execution
-		s.scheduled.Timer = time.AfterFunc(d, e)
+		s.scheduled.Timer = s.provider.AfterFunc(d, e)
 	}
 }
 
@@ -230,12 +271,12 @@ func (s *Scheduler) scheduleFirstFromQueue() {
 }
 
 // now returns the current time considering the offset.
-func (s *Scheduler) now() time.Time {
-	return time.Now().Add(s.timeOffset)
+func (s *Scheduler) now() Time {
+	return s.provider.Now().Add(s.timeOffset)
 }
 
 // newJobID generates a new unique identifier.
-func newJobID(tm time.Time) (Job, error) {
+func newJobID(tm Time) (Job, error) {
 	k, err := ksuid.NewRandomWithTime(tm)
 	if err != nil {
 		return Job{}, err
@@ -258,6 +299,6 @@ func (id Job) String() string {
 }
 
 // Due returns the scheduled due time of the job.
-func (id Job) Due() time.Time {
+func (id Job) Due() Time {
 	return ksuid.KSUID(id).Time()
 }
