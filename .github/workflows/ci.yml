@@ -17,6 +17,30 @@ jobs:
     # Run all tests with the race detector enabled
     - name: Test
       run: go test -v -race ./...
+      
+    # TEST COVERAGE
+    
+    # Install tools/cmd/cover
+    - name: Install tools/cmd/cover
+      run: go get golang.org/x/tools/cmd/cover
+
+    # Install overalls
+    - name: Install overalls
+      run: go get github.com/go-playground/overalls
+
+    # Overalls
+    - name: overalls
+      run: $(go env GOPATH)/bin/overalls -project /home/runner/work/sched/sched -covermode atomic -debug -- -race -v -coverpkg ./...
+
+    # Install goveralls
+    - name: Install goveralls
+      run: go get github.com/mattn/goveralls
+
+    # Goveralls
+    - name: goveralls
+      env:
+        COVERALLS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: $(go env GOPATH)/bin/goveralls -coverprofile overalls.coverprofile -service=github -repotoken=$COVERALLS_TOKEN
 
     # LINT
     - name: Install golint
