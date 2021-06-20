@@ -13,6 +13,7 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/romshark/sched/sched"
 	"github.com/romshark/sched/sched/mock"
+	"github.com/segmentio/ksuid"
 	"github.com/stretchr/testify/require"
 )
 
@@ -148,6 +149,12 @@ func TestCancel(t *testing.T) {
 
 	require.True(t, sched.Cancel(j))
 
+	ExpectJobs(t)
+}
+
+func TestCancelNoop(t *testing.T) {
+	ExpectJobs(t)
+	require.False(t, sched.Cancel(sched.Job(ksuid.New())))
 	ExpectJobs(t)
 }
 
