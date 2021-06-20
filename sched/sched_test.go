@@ -20,10 +20,11 @@ func TestSchedule(t *testing.T) {
 
 	sched.DefaultScheduler = sched.NewWithProvider(0, tm)
 
+	start := time.Date(2021, 6, 20, 10, 00, 00, 0, time.UTC)
 	tm.EXPECT().
 		Now().
 		MaxTimes(2).
-		Return(time.Date(2021, 6, 20, 10, 00, 00, 0, time.UTC))
+		Return(start)
 
 	timer := mock.NewMockTimer(mc)
 	tm.EXPECT().
@@ -39,12 +40,34 @@ func TestSchedule(t *testing.T) {
 		panic("this should not be invoked")
 	}
 
-	require.Equal(t, 0, sched.Len())
 	j, err := sched.Schedule(sched.Hour, callback)
 	require.NoError(t, err)
 	require.NotZero(t, j)
 
 	ExpectJobs(t, Job{j, callback})
+
+	timer.EXPECT().
+		Stop().
+		MaxTimes(1).
+		Return(true)
+
+	dur2 := 30 * sched.Minute
+
+	timer2 := mock.NewMockTimer(mc)
+	tm.EXPECT().
+		Now().
+		MaxTimes(2).
+		Return(start)
+	tm.EXPECT().
+		AfterFunc(dur2, gomock.Any()).
+		MaxTimes(1).
+		Return(timer2)
+
+	j2, err := sched.Schedule(dur2, callback)
+	require.NoError(t, err)
+	require.NotZero(t, j2)
+
+	ExpectJobs(t, Job{j2, callback}, Job{j, callback})
 }
 
 func TestCancel(t *testing.T) {
@@ -158,17 +181,30 @@ type Job struct {
 
 func ExpectJobs(t *testing.T, expected ...Job) {
 	require.Equal(t, len(expected), sched.Len())
-	i := 0
+
+	var actual []Job
 	ok := sched.Scan(sched.Job{}, func(j sched.Job, jobFn func()) bool {
-		require.Equal(t, expected[i].Job, j)
-		EqualFn(t, expected[i].JobFn, jobFn)
+		actual = append(actual, Job{j, jobFn})
 		return true
 	})
 	require.True(t, ok)
+
+	require.Len(t, actual, len(expected))
+	for i, x := range expected {
+		actual := actual[i]
+		require.Equal(
+			t, x.Job.String(), actual.Job.String(),
+			"unexpected job id at index %d", i,
+		)
+		EqualFn(
+			t, x.JobFn, actual.JobFn,
+			"unexpected job fn at index %d", i,
+		)
+	}
 }
 
-func EqualFn(t *testing.T, a, b func()) {
-	f1 := runtime.FuncForPC(reflect.ValueOf(a).Pointer()).Name()
-	f2 := runtime.FuncForPC(reflect.ValueOf(b).Pointer()).Name()
-	require.Equal(t, f1, f2)
+func EqualFn(t *testing.T, e, a func(), msgAndArgs ...interface{}) {
+	fe := runtime.FuncForPC(reflect.ValueOf(e).Pointer()).Name()
+	fa := runtime.FuncForPC(reflect.ValueOf(a).Pointer()).Name()
+	require.Equal(t, fe, fa, msgAndArgs...)
 }
