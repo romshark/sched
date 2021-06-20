@@ -4,8 +4,8 @@
 <a href="https://goreportcard.com/report/github.com/romshark/sched">
   <img src="https://goreportcard.com/badge/github.com/romshark/sched" alt="GoReportCard">
 </a>
-<a href="https://coveralls.io/github/romshark/sched">
-    <img src="https://coveralls.io/repos/github/romshark/sched/badge.svg" alt="Coverage Status" />
+<a href="https://coveralls.io/github/romshark/sched?branch=main">
+  <img src="https://coveralls.io/repos/github/romshark/sched/badge.svg?branch=main" alt="Coverage Status">
 </a>
 <a href="https://pkg.go.dev/github.com/romshark/sched">
   <img src="https://pkg.go.dev/badge/github.com/romshark/sched.svg" alt="Go Reference">
