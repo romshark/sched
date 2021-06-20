@@ -180,6 +180,14 @@ func TestAdvanceTime(t *testing.T) {
 	sched.DefaultScheduler = sched.NewWithProvider(0, tm)
 
 	start := time.Date(2021, 6, 20, 10, 00, 00, 0, time.UTC)
+
+	tm.EXPECT().
+		Now().
+		MaxTimes(1).
+		Return(start)
+
+	require.Equal(t, start, sched.Now())
+
 	tm.EXPECT().
 		Now().
 		MaxTimes(2).
@@ -223,6 +231,13 @@ func TestAdvanceTime(t *testing.T) {
 
 	require.Equal(t, advanceBy, sched.AdvanceTime(advanceBy))
 
+	tm.EXPECT().
+		Now().
+		MaxTimes(1).
+		Return(start)
+
+	require.Equal(t, start.Add(advanceBy), sched.Now())
+
 	elapsed := 5 * time.Minute
 	advanceBy2 := 30 * time.Minute
 	timer.EXPECT().
@@ -235,6 +250,13 @@ func TestAdvanceTime(t *testing.T) {
 		Return(start.Add(elapsed))
 
 	require.Equal(t, advanceBy+advanceBy2, sched.AdvanceTime(advanceBy2))
+
+	tm.EXPECT().
+		Now().
+		MaxTimes(1).
+		Return(start)
+
+	require.Equal(t, start.Add(advanceBy+advanceBy2), sched.Now())
 }
 
 type Job struct {
