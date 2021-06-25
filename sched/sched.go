@@ -73,6 +73,11 @@ func Len() int {
 	return DefaultScheduler.Len()
 }
 
+// Offset returns the scheduler's time offset
+func Offset() time.Duration {
+	return DefaultScheduler.Offset()
+}
+
 // Scan scans all jobs after the given job executing fn for each
 // until either the end of the queue is reached or fn returns false.
 // Starts from the front of the queue if after is zero.
@@ -191,6 +196,15 @@ func (s *Scheduler) AdvanceTime(by Duration) (newOffset Duration) {
 	if s.scheduled.Timer != nil {
 		s.scheduled.Timer.Reset(s.scheduled.ID.Due().Sub(s.now()))
 	}
+	return s.timeOffset
+}
+
+
+// Offset returns the scheduler's time offset
+func (s *Scheduler) Offset() time.Duration {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
 	return s.timeOffset
 }
 

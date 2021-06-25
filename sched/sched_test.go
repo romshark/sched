@@ -230,6 +230,7 @@ func TestAdvanceTime(t *testing.T) {
 		Return(start)
 
 	require.Equal(t, advanceBy, sched.AdvanceTime(advanceBy))
+	require.Equal(t, advanceBy, sched.Offset())
 
 	tm.EXPECT().
 		Now().
@@ -250,6 +251,7 @@ func TestAdvanceTime(t *testing.T) {
 		Return(start.Add(elapsed))
 
 	require.Equal(t, advanceBy+advanceBy2, sched.AdvanceTime(advanceBy2))
+	require.Equal(t, advanceBy+advanceBy2, sched.Offset())
 
 	tm.EXPECT().
 		Now().
