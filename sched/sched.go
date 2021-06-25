@@ -68,6 +68,12 @@ func AdvanceTime(by Duration) (newOffset Duration) {
 	return DefaultScheduler.AdvanceTime(by)
 }
 
+// AdvanceToNext advances the current time to the next job
+// executing it immediately. Does nothing if no jobs are pending.
+func AdvanceToNext() (newOffset, advancedBy Duration) {
+	return DefaultScheduler.AdvanceToNext()
+}
+
 // Len returns the lenfth of the queue (number of pending jobs).
 func Len() int {
 	return DefaultScheduler.Len()
@@ -199,6 +205,31 @@ func (s *Scheduler) AdvanceTime(by Duration) (newOffset Duration) {
 	return s.timeOffset
 }
 
+// AdvanceToNext advances the current time to the next job
+// executing it immediately. Does nothing if no jobs are pending.
+func (s *Scheduler) AdvanceToNext() (newOffset, advancedBy Duration) {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+
+	if s.scheduled.Timer == nil {
+		return s.timeOffset, 0
+	}
+
+	by := s.scheduled.job.ID.Due().Sub(s.now())
+	s.timeOffset += by
+
+	e := s.makeExecutable(s.scheduled.job)
+
+	if s.scheduled.Timer != nil {
+		s.scheduled.Timer.Stop()
+		s.scheduled.Timer = nil
+	}
+
+	// Execute immediately
+	go e()
+
+	return s.timeOffset, by
+}
 
 // Offset returns the scheduler's time offset
 func (s *Scheduler) Offset() time.Duration {
@@ -247,10 +278,8 @@ func (s *Scheduler) Scan(
 	return true
 }
 
-// execute either executes the job immediately
-// or schedules the job for deferred execution.
-func (s *Scheduler) execute(j job) {
-	e := func() {
+func (s *Scheduler) makeExecutable(j job) func() {
+	return func() {
 		j.Fn()
 
 		s.lock.Lock()
@@ -261,6 +290,12 @@ func (s *Scheduler) execute(j job) {
 		// Schedule next if any
 		s.scheduleFirstFromQueue()
 	}
+}
+
+// execute either executes the job immediately
+// or schedules the job for deferred execution.
+func (s *Scheduler) execute(j job) {
+	e := s.makeExecutable(j)
 
 	if s.scheduled.Timer != nil {
 		s.scheduled.Timer.Stop()
