@@ -261,6 +261,107 @@ func TestAdvanceTime(t *testing.T) {
 	require.Equal(t, start.Add(advanceBy+advanceBy2), sched.Now())
 }
 
+func TestAdvanceToNext(t *testing.T) {
+	mc := gomock.NewController(t)
+	tm := mock.NewMockTimeProvider(mc)
+
+	sched.DefaultScheduler = sched.NewWithProvider(0, tm)
+
+	// ExpectJobs(t)
+
+	start := time.Date(2021, 6, 20, 10, 00, 00, 0, time.UTC)
+
+	var wg sync.WaitGroup
+
+	// Add first job
+	tm.EXPECT().
+		Now().
+		MaxTimes(4).
+		Return(start)
+
+	timer := mock.NewMockTimer(mc)
+	timer.EXPECT().
+		Stop().
+		MaxTimes(1).
+		Return(true)
+
+	dueDur := sched.Hour
+	tm.EXPECT().
+		AfterFunc(dueDur, gomock.Any()).
+		MaxTimes(2).
+		Return(timer)
+
+	callback1 := func() { wg.Done() }
+
+	nextAfter1 := sched.Hour
+	j1, err := sched.Schedule(nextAfter1, callback1)
+	require.NoError(t, err)
+	require.NotZero(t, j1)
+
+	// Add second job
+
+	callback2 := func() { wg.Done() }
+	nextAfter2 := 2 * sched.Hour
+	j2, err := sched.Schedule(nextAfter2, callback2)
+	require.NoError(t, err)
+	require.NotZero(t, j2)
+
+	ExpectJobs(t, Job{j1, callback1}, Job{j2, callback2})
+
+	wg.Add(1)
+
+	// Advance to first job
+	timer.EXPECT().
+		Stop().
+		MaxTimes(1).
+		Return(true)
+	tm.EXPECT().
+		Now().
+		MaxTimes(2).
+		Return(start)
+
+	offset, advancedBy := sched.AdvanceToNext()
+	require.Equal(t, nextAfter1, offset)
+	require.Equal(t, nextAfter1, advancedBy)
+
+	// Wait until the first job has been executed
+	wg.Wait()
+	require.Equal(t, nextAfter1, sched.Offset())
+	wg.Add(1)
+
+	// Advance to second job
+	timer.EXPECT().
+		Stop().
+		MaxTimes(1).
+		Return(true)
+	tm.EXPECT().
+		Now().
+		MaxTimes(2).
+		Return(start)
+
+	offset2, advancedBy2 := sched.AdvanceToNext()
+	require.Equal(t, nextAfter2, offset2)
+	require.Equal(t, nextAfter2-nextAfter1, advancedBy2)
+
+	// Wait until the second job has been executed
+	wg.Wait()
+	require.Equal(t, nextAfter2, sched.Offset())
+}
+
+func TestAdvanceToNextNoop(t *testing.T) {
+	mc := gomock.NewController(t)
+	tm := mock.NewMockTimeProvider(mc)
+
+	sched.DefaultScheduler = sched.NewWithProvider(0, tm)
+
+	ExpectJobs(t)
+
+	offset, advancedBy := sched.AdvanceToNext()
+	require.Equal(t, time.Duration(0), offset)
+	require.Equal(t, time.Duration(0), advancedBy)
+	require.Equal(t, time.Duration(0), sched.Offset())
+}
+
 func TestScanAfter(t *testing.T) {
 	mc := gomock.NewController(t)
 	tm := mock.NewMockTimeProvider(mc)
