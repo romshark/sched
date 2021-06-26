@@ -41,7 +41,8 @@ func (p defaultTimeProvider) AfterFunc(d Duration, fn func()) Timer {
 }
 
 // DefaultScheduler is the default Scheduler
-// used by Schedule, Cancel, Now, AdvanceTime, Len and Scan.
+// used by Schedule, Cancel, Now, AdvanceTime,
+// AdvanceToNext, Len, Offset and Scan.
 var DefaultScheduler = New(0)
 
 // Now returns the current time of the scheduler considering the offset.
