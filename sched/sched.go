@@ -51,7 +51,7 @@ func Now() Time {
 
 // Schedule schedules fn for execution at the scheduler's time.
 // fn will be executed in its own goroutine.
-// if n < 1 then fn will be executed immediately and
+// if in < 1 then fn will be executed immediately and
 // the returned JobID will be zero.
 func Schedule(in Duration, fn func()) (Job, error) {
 	return DefaultScheduler.Schedule(in, fn)
@@ -142,7 +142,7 @@ func (s *Scheduler) Now() Time {
 
 // Schedule schedules fn for execution at the scheduler's time.
 // fn will be executed in its own goroutine.
-// if n < 1 then fn will be executed immediately and
+// if in < 1 then fn will be executed immediately and
 // the returned JobID will be zero.
 func (s *Scheduler) Schedule(in Duration, fn func()) (Job, error) {
 	if in < 1 {
