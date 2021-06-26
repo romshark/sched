@@ -74,7 +74,7 @@ func AdvanceToNext() (newOffset, advancedBy Duration) {
 	return DefaultScheduler.AdvanceToNext()
 }
 
-// Len returns the lenfth of the queue (number of pending jobs).
+// Len returns the length of the queue (number of pending jobs).
 func Len() int {
 	return DefaultScheduler.Len()
 }
@@ -239,7 +239,7 @@ func (s *Scheduler) Offset() time.Duration {
 	return s.timeOffset
 }
 
-// Len returns the lenfth of the queue (number of pending jobs).
+// Len returns the length of the queue (number of pending jobs).
 func (s *Scheduler) Len() int {
 	s.lock.RLock()
 	defer s.lock.RUnlock()
