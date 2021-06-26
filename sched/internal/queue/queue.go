@@ -30,11 +30,8 @@ func (q Queue) Set(id ksuid.KSUID, fn func()) (setAtFront bool) {
 	return e.Prev() == nil
 }
 
-func (q Queue) Get(id ksuid.KSUID) func() {
-	if e := q.l.Get(id); e != nil {
-		return e.Value.(job).Fn
-	}
-	return nil
+func (q Queue) Has(id ksuid.KSUID) bool {
+	return q.l.Get(id) != nil
 }
 
 func (q Queue) Front() (ksuid.KSUID, func()) {

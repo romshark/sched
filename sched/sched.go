@@ -34,7 +34,7 @@ type TimeProvider interface {
 }
 
 type QueueReader interface {
-	Get(ksuid.KSUID) func()
+	Has(ksuid.KSUID) bool
 	Len() int
 	Scan(
 		after ksuid.KSUID,
@@ -182,7 +182,7 @@ func (s *Scheduler) Schedule(in Duration, fn func()) (Job, error) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
-	if e := s.queue.Get(ksuid.KSUID(id)); e != nil {
+	if s.queue.Has(ksuid.KSUID(id)) {
 		return Job{}, fmt.Errorf("identifier collision: %s", id.String())
 	}
 
