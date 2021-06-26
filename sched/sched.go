@@ -80,7 +80,7 @@ func Len() int {
 	return DefaultScheduler.Len()
 }
 
-// Offset returns the scheduler's time offset
+// Offset returns the scheduler's time offset.
 func Offset() time.Duration {
 	return DefaultScheduler.Offset()
 }
@@ -112,7 +112,7 @@ func New(timeOffset Duration) *Scheduler {
 	}
 }
 
-// NewWithProvider is similar to New but replaces the default time provider
+// NewWithProvider is similar to New but replaces the default time provider.
 func NewWithProvider(
 	timeOffset Duration,
 	p TimeProvider,
@@ -232,7 +232,7 @@ func (s *Scheduler) AdvanceToNext() (newOffset, advancedBy Duration) {
 	return s.timeOffset, by
 }
 
-// Offset returns the scheduler's time offset
+// Offset returns the scheduler's time offset.
 func (s *Scheduler) Offset() time.Duration {
 	s.lock.RLock()
 	defer s.lock.RUnlock()
