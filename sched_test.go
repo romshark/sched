@@ -11,8 +11,8 @@ import (
 	"time"
 
 	"github.com/golang/mock/gomock"
-	"github.com/romshark/sched/sched"
-	"github.com/romshark/sched/sched/internal/mock"
+	"github.com/romshark/sched/v2"
+	"github.com/romshark/sched/v2/internal/mock"
 	"github.com/segmentio/ksuid"
 	"github.com/stretchr/testify/require"
 )

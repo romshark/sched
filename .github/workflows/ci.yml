@@ -30,7 +30,7 @@ jobs:
 
     # Overalls
     - name: overalls
-      run: $(go env GOPATH)/bin/overalls -project /home/runner/work/sched/sched -covermode atomic -debug -- -race -v -coverpkg ./...
+      run: $(go env GOPATH)/bin/overalls -project /home/runner/work/sched -covermode atomic -debug -- -race -v -coverpkg ./...
 
     # Install goveralls
     - name: Install goveralls

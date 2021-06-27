@@ -1,4 +1,4 @@
-module github.com/romshark/sched
+module github.com/romshark/sched/v2
 
 go 1.16
 

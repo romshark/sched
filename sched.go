@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/romshark/sched/sched/internal/queue"
+	"github.com/romshark/sched/v2/internal/queue"
 	"github.com/segmentio/ksuid"
 )
 
