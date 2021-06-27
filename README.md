@@ -17,4 +17,4 @@
 
 A job scheduler for Go with the ability to fast-forward time.
 
-Example: https://play.golang.org/p/7yI4etMN7ic
+Example: https://play.golang.org/p/BQDi8MKraIe
