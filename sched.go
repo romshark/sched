@@ -133,16 +133,6 @@ func NewWith(
 	}
 }
 
-// NewWithProvider is similar to New but replaces the default time provider.
-func NewWithProvider(
-	timeOffset Duration,
-	p TimeProvider,
-) *Scheduler {
-	s := New(timeOffset)
-	s.provider = p
-	return s
-}
-
 // Scheduler is a job scheduler.
 type Scheduler struct {
 	provider   TimeProvider
