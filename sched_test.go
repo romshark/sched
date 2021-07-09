@@ -21,7 +21,7 @@ func TestSchedule(t *testing.T) {
 	mc := gomock.NewController(t)
 	tm := mock.NewMockTimeProvider(mc)
 
-	sched.DefaultScheduler = sched.NewWithProvider(0, tm)
+	sched.DefaultScheduler = sched.NewWith(0, tm, nil)
 
 	start := time.Date(2021, 6, 20, 10, 00, 00, 0, time.UTC)
 
@@ -92,7 +92,7 @@ func TestScheduleImmediately(t *testing.T) {
 	mc := gomock.NewController(t)
 	tm := mock.NewMockTimeProvider(mc)
 
-	sched.DefaultScheduler = sched.NewWithProvider(0, tm)
+	sched.DefaultScheduler = sched.NewWith(0, tm, nil)
 
 	start := time.Date(2021, 6, 20, 10, 00, 00, 0, time.UTC)
 	tm.EXPECT().
@@ -131,7 +131,7 @@ func TestCancel(t *testing.T) {
 	mc := gomock.NewController(t)
 	tm := mock.NewMockTimeProvider(mc)
 
-	sched.DefaultScheduler = sched.NewWithProvider(0, tm)
+	sched.DefaultScheduler = sched.NewWith(0, tm, nil)
 
 	tm.EXPECT().
 		Now().
@@ -177,7 +177,7 @@ func TestAdvanceTime(t *testing.T) {
 	mc := gomock.NewController(t)
 	tm := mock.NewMockTimeProvider(mc)
 
-	sched.DefaultScheduler = sched.NewWithProvider(0, tm)
+	sched.DefaultScheduler = sched.NewWith(0, tm, nil)
 
 	start := time.Date(2021, 6, 20, 10, 00, 00, 0, time.UTC)
 
@@ -265,7 +265,7 @@ func TestAdvanceToNext(t *testing.T) {
 	mc := gomock.NewController(t)
 	tm := mock.NewMockTimeProvider(mc)
 
-	sched.DefaultScheduler = sched.NewWithProvider(0, tm)
+	sched.DefaultScheduler = sched.NewWith(0, tm, nil)
 
 	// ExpectJobs(t)
 
@@ -352,7 +352,7 @@ func TestAdvanceToNextNoop(t *testing.T) {
 	mc := gomock.NewController(t)
 	tm := mock.NewMockTimeProvider(mc)
 
-	sched.DefaultScheduler = sched.NewWithProvider(0, tm)
+	sched.DefaultScheduler = sched.NewWith(0, tm, nil)
 
 	ExpectJobs(t)
 
@@ -366,7 +366,7 @@ func TestScanAfter(t *testing.T) {
 	mc := gomock.NewController(t)
 	tm := mock.NewMockTimeProvider(mc)
 
-	sched.DefaultScheduler = sched.NewWithProvider(0, tm)
+	sched.DefaultScheduler = sched.NewWith(0, tm, nil)
 
 	start := time.Date(2021, 6, 20, 10, 00, 00, 0, time.UTC)
 
@@ -407,7 +407,7 @@ func TestScanInterrupt(t *testing.T) {
 	mc := gomock.NewController(t)
 	tm := mock.NewMockTimeProvider(mc)
 
-	sched.DefaultScheduler = sched.NewWithProvider(0, tm)
+	sched.DefaultScheduler = sched.NewWith(0, tm, nil)
 
 	start := time.Date(2021, 6, 20, 10, 00, 00, 0, time.UTC)
 
@@ -442,7 +442,7 @@ func TestScanAfterNotFound(t *testing.T) {
 	mc := gomock.NewController(t)
 	tm := mock.NewMockTimeProvider(mc)
 
-	sched.DefaultScheduler = sched.NewWithProvider(0, tm)
+	sched.DefaultScheduler = sched.NewWith(0, tm, nil)
 
 	start := time.Date(2021, 6, 20, 10, 00, 00, 0, time.UTC)
 
