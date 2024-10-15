@@ -1,51 +1,43 @@
 on: [push, pull_request]
 name: CI
 jobs:
-  build-test-lint:
+  test:
     runs-on: ubuntu-latest
     steps:
-    # PREPARE
-    - name: Install Go 1.16
-      uses: actions/setup-go@v2
-      with:
-        go-version: 1.16
+      - name: Install Go 1.23.2
+        uses: actions/setup-go@v4
+        with:
+          go-version: "1.23.2"
+          check-latest: true
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-    - name: Checkout repository
-      uses: actions/checkout@v2
+      # Test
+      - name: Test
+        run: go test -v -race ./...
+      - name: Calculate coverage
+        run: go test -v -covermode=count -coverprofile=coverage.out
+      - name: Convert coverage.out to coverage.lcov
+        uses: jandelgado/gcov2lcov-action@v1.0.9
+      - name: Coveralls
+        uses: coverallsapp/github-action@master
+        with:
+          github-token: ${{ secrets.github_token }}
+          path-to-lcov: coverage.lcov
+      - name: Run go vet
+        continue-on-error: true
+        run: go vet ./...
 
-    - name: Install dependencies
-      run: go mod download
-
-    # TESTS
-    - name: Run tests
-      run: go test -v -race -covermode atomic -coverprofile=covprofile ./...
-
-    # TEST COVERAGE
-    - name: Install goveralls
-      env:
-        GO111MODULE: off
-      run: go get github.com/mattn/goveralls
-
-    - name: Send coverage
-      env:
-        COVERALLS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: goveralls -coverprofile=covprofile -service=github
-
-    # LINT
-    - name: Install golint
-      run: go get golang.org/x/lint/golint
-
-    - name: Install golangci-lint
-      run: curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s -- -b $(go env GOPATH)/bin v1.41.1
-
-    - name: go vet
-      continue-on-error: true
-      run: go vet ./...
-
-    - name: golangci-lint
-      continue-on-error: true
-      run: golangci-lint run ./...
-
-    - name: golint
-      continue-on-error: true
-      run: golint -set_exit_status $(go list ./...)
+      # Make sure go generate was executed before commit
+      - name: Go generate
+        run: go generate
+      - name: Check file changes after running go generate
+        run: |
+          git diff --exit-code
+        id: diff_files_after_go_generate
+        continue-on-error: true
+      - name: Fail if changes are detected
+        if: steps.diff_files_after_go_generate.outcome == 'failure'
+        run: |
+          echo "Detected uncommitted changes after running go generate." \
+          "Please run go generate and commit changes." && exit 1

@@ -1,6 +1,6 @@
 package sched_test
 
-//go:generate mockgen -package mock -destination ./internal/mock/mock_gen.go . TimeProvider,Timer
+//go:generate mockgen -source ./sched.go -destination ./internal/mock/mock_gen.go -package mock TimeProvider,Timer
 
 import (
 	"reflect"
@@ -10,11 +10,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/mock/gomock"
 	"github.com/romshark/sched/v2"
 	"github.com/romshark/sched/v2/internal/mock"
+
 	"github.com/segmentio/ksuid"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/mock/gomock"
 )
 
 func TestSchedule(t *testing.T) {
@@ -481,19 +482,22 @@ func TestScheduleAutoExec(t *testing.T) {
 	var wg sync.WaitGroup
 	wg.Add(3)
 	var executionOrder []int
-	s.Schedule(time.Minute, func() {
+	_, err := s.Schedule(time.Minute, func() {
 		defer wg.Done()
 		executionOrder = append(executionOrder, 2)
 	})
-	s.Schedule(2*time.Minute, func() {
+	require.NoError(t, err)
+	_, err = s.Schedule(2*time.Minute, func() {
 		defer wg.Done()
 		executionOrder = append(executionOrder, 3)
 	})
-	s.Schedule(1, func() {
+	require.NoError(t, err)
+	_, err = s.Schedule(1, func() {
 		defer wg.Done()
 		executionOrder = append(executionOrder, 1)
 		require.Equal(t, 2*time.Minute, s.AdvanceTime(2*time.Minute))
 	})
+	require.NoError(t, err)
 	wg.Wait()
 
 	require.Equal(t, []int{1, 2, 3}, executionOrder)
@@ -531,7 +535,7 @@ func ExpectJobsAfter(t *testing.T, after sched.Job, expected ...Job) {
 	}
 }
 
-func EqualFn(t *testing.T, e, a func(), msgAndArgs ...interface{}) {
+func EqualFn(t *testing.T, e, a func(), msgAndArgs ...any) {
 	fe := runtime.FuncForPC(reflect.ValueOf(e).Pointer()).Name()
 	fa := runtime.FuncForPC(reflect.ValueOf(a).Pointer()).Name()
 	require.Equal(t, fe, fa, msgAndArgs...)

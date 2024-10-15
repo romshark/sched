@@ -8,7 +8,7 @@ import (
 func New() Queue {
 	return Queue{
 		l: skiplist.New(
-			skiplist.GreaterThanFunc(func(a, b interface{}) int {
+			skiplist.GreaterThanFunc(func(a, b any) int {
 				s1, s2 := a.(ksuid.KSUID).String(), b.(ksuid.KSUID).String()
 				if s1 > s2 {
 					return 1

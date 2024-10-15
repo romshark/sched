@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/romshark/sched/v2/internal/queue"
+
 	"github.com/segmentio/ksuid"
 )
 
