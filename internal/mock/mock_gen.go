@@ -21,6 +21,7 @@ import (
 type MockTimer struct {
 	ctrl     *gomock.Controller
 	recorder *MockTimerMockRecorder
+	isgomock struct{}
 }
 
 // MockTimerMockRecorder is the mock recorder for MockTimer.
@@ -72,6 +73,7 @@ func (mr *MockTimerMockRecorder) Stop() *gomock.Call {
 type MockTimeProvider struct {
 	ctrl     *gomock.Controller
 	recorder *MockTimeProviderMockRecorder
+	isgomock struct{}
 }
 
 // MockTimeProviderMockRecorder is the mock recorder for MockTimeProvider.
@@ -123,6 +125,7 @@ func (mr *MockTimeProviderMockRecorder) Now() *gomock.Call {
 type MockQueueReader struct {
 	ctrl     *gomock.Controller
 	recorder *MockQueueReaderMockRecorder
+	isgomock struct{}
 }
 
 // MockQueueReaderMockRecorder is the mock recorder for MockQueueReader.
@@ -188,6 +191,7 @@ func (mr *MockQueueReaderMockRecorder) Scan(after, fn any) *gomock.Call {
 type MockQueueWriter struct {
 	ctrl     *gomock.Controller
 	recorder *MockQueueWriterMockRecorder
+	isgomock struct{}
 }
 
 // MockQueueWriterMockRecorder is the mock recorder for MockQueueWriter.
@@ -254,6 +258,7 @@ func (mr *MockQueueWriterMockRecorder) Set(arg0, arg1 any) *gomock.Call {
 type MockQueueReadWriter struct {
 	ctrl     *gomock.Controller
 	recorder *MockQueueReadWriterMockRecorder
+	isgomock struct{}
 }
 
 // MockQueueReadWriterMockRecorder is the mock recorder for MockQueueReadWriter.
